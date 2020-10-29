@@ -20,4 +20,4 @@ jobs:
         with:
           meteor-release: '1.9.2'
 
-      - run: meteor test-package ./
+      - run: meteor test-packages ./
