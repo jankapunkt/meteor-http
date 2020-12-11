@@ -1,3 +1,4 @@
+import { EJSON } from 'meteor/ejson'
 import { URL } from 'meteor/url'
 import common from './httpcall_common.js'
 
@@ -44,7 +45,7 @@ HTTP.call = function (method, url, options, callback) {
 
   var content = options.content
   if (options.data) {
-    content = JSON.stringify(options.data)
+    content = EJSON.stringify(options.data)
     headers['Content-Type'] = 'application/json'
   }
 

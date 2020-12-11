@@ -1,3 +1,5 @@
+import { EJSON } from 'meteor/ejson'
+
 // URL prefix for tests to talk to
 let _XHR_URL_PREFIX = '/http_test_responder'
 
@@ -419,7 +421,7 @@ testAsyncMulti('httpcall - params', [
             const data = result.data
             test.equal(data.method, method)
             test.equal(data.url, expect_url)
-            test.equal(data.body, expect_body, `${method} ${url} ${JSON.stringify(params)} - expect body`)
+            test.equal(data.body, expect_body, `${method} ${url} ${EJSON.stringify(params)} - expect body`)
           }
         }))
     }

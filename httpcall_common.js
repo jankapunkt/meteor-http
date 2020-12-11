@@ -1,3 +1,5 @@
+import { EJSON } from 'meteor/ejson'
+
 const MAX_LENGTH = 500 // if you change this, also change the appropriate test
 const slice = Array.prototype.slice
 
@@ -34,7 +36,7 @@ export const populateData = function populateData (response) {
   // Only try to parse data as JSON if server sets correct content type.
   if (supportedContentTypes.includes(contentType)) {
     try {
-      response.data = JSON.parse(response.content)
+      response.data = EJSON.parse(response.content)
     } catch (err) {
       response.data = null
     }
