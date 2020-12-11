@@ -37,6 +37,13 @@ Your contributions are very welcomed. Please ensure to run tests via:
 $ meteor test-packages ./ 
 ```
 
+## Changelog
+
+- **2.0.1**
+  - replaced `JSON.stringify` and `JSON.parse` with `EJSON`
+- **2.0.0**
+  - ported original `http` package and replaced `request` with `fetch`
+
 ## License
 
 The original package is part of the Meteor core, which is MIT licensed. There
