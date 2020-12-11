@@ -1,3 +1,5 @@
+import { EJSON } from 'meteor/ejson'
+
 let TEST_RESPONDER_ROUTE = '/http_test_responder'
 
 const respond = function (req, res) {
@@ -56,7 +58,7 @@ const respond = function (req, res) {
     let body = chunks.join('')
 
     if (body.charAt(0) === '{') {
-      body = JSON.parse(body)
+      body = EJSON.parse(body)
     }
 
     const response_data = {
@@ -68,7 +70,7 @@ const respond = function (req, res) {
 
     let response_string = ''
     if (req.method !== 'HEAD')
-      response_string = JSON.stringify(response_data)
+      response_string = EJSON.stringify(response_data)
 
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
