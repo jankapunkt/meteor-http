@@ -22,6 +22,17 @@ and import it into your code via
 import { HTTP } from 'meteor/jkuester:http'
 ```
 
+## Replace core http with this package
+
+If you want to replace the core http with this package, then you need to
+clone into your project's `packages` folder or clone it anywhere you like and
+
+a) create a symbolic link to it's folder or
+b) link it via `METEOR_PACKAGE_DIRS`
+
+Then **check out the branch** `core-replacement` and run your Meteor app.
+
+
 ## Usage
 
 The package preserves all the original API functionality, except 
