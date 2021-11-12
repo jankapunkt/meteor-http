@@ -81,7 +81,10 @@ $ meteor npm run test:coverage # run tests once but with coverage report
 - **2.1.0**
   - Added `AbortController` implementation until we get Node >= 16
   - Refactored tests to use `meteortesting:mocha`
-  - added some dev tooling (linter, coverage); see the bare `tests/` project
+  - added bare `tests/` project
+  - use standard linter; code is now standard linted
+  - added EJSON tests
+  - added static file serving tests
 - **2.0.1**
   - replaced `JSON.stringify` and `JSON.parse` with `EJSON`
 - **2.0.0**
