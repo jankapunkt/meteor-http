@@ -20,4 +20,4 @@ jobs:
         with:
           meteor-release: '1.9.2'
 
-      - run: meteor test-packages ./
+      - run: cd tests && meteor npm run ci
