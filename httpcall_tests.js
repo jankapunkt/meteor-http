@@ -1,4 +1,6 @@
-/* global WebApp */
+/* eslint-env mocha */
+/* global WebApp XMLHttpRequest */
+import { Meteor } from 'meteor/meteor'
 import { EJSON } from 'meteor/ejson'
 import { Random } from 'meteor/random'
 import { HTTP } from 'meteor/jkuester:http'
@@ -27,9 +29,9 @@ const onClient = x => Meteor.isClient ? x() : undefined
 const onServer = x => Meteor.isServer ? x() : undefined
 
 describe('http tests', function () {
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - basic
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - basic', function () {
     const basicGet = function (url, options, expectedUrl) {
       it(`basic get: ${expectedUrl}`, function (done) {
@@ -112,9 +114,9 @@ describe('http tests', function () {
     }, '/foo?fruit=apple&dog=Spot+the+dog')
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - errors
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - errors', function () {
     it('should fail to make any connection', function (done) {
       this.timeout(10000)
@@ -182,16 +184,15 @@ describe('http tests', function () {
         } catch (e) {
           error500Callback(e, e.response)
         }
-      }
-      else {
+      } else {
         HTTP.call('GET', urlPrefix() + '/fail', error500Callback)
       }
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - timeout
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - timeout', function () {
     it('should time out', function (done) {
       const timeoutCallback = function (error, result) {
@@ -250,9 +251,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - redirect
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - redirect', function () {
     it('should follow redirect by default', function (done) {
       const redirectCallback = function (error, result) {
@@ -286,7 +287,6 @@ describe('http tests', function () {
     ;[false, true].forEach(function (followRedirects) {
       ['GET', 'POST'].forEach(method => {
         it(`should ${followRedirects ? '' : 'not'} follow redirect on ${method} method`, function (done) {
-
           const callback = (error, result) => {
             assert.equal(!!error, false, 'expected no error')
             assert.equal(!!result, true, 'expected result')
@@ -331,9 +331,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - methods
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - methods', function () {
     const testMethod = function (methodName, fctName) {
       const name = fctName || methodName.toLowerCase()
@@ -487,9 +487,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - http auth
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - http auth', function () {
     // Unfortunately, any failed auth will result in a browser
     // password prompt.  So we don't test auth failure, only
@@ -563,9 +563,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - headers
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - headers', function () {
     it('should work with custom request headers', function (done) {
       const callback = function (error, result) {
@@ -577,7 +577,7 @@ describe('http tests', function () {
         assert.equal(data.url, '/foo-with-headers')
         assert.equal(data.method, 'GET')
         assert.equal(data.headers['test-header'], 'Value')
-        assert.equal(data.headers['another'], 'Value2')
+        assert.equal(data.headers.another, 'Value2')
 
         done()
       }
@@ -585,7 +585,7 @@ describe('http tests', function () {
       const options = {
         headers: {
           'Test-header': 'Value',
-          'another': 'Value2'
+          another: 'Value2'
         }
       }
 
@@ -629,9 +629,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - caching
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   onClient(function () {
     // https://developer.mozilla.org/en-US/docs/Web/API/Request/cache
     describe('httpcall - caching', function () {
@@ -644,9 +644,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - cors
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   onClient(function () {
     // https://developer.mozilla.org/en-US/docs/Web/API/Request/mode
     describe('httpcall - mode (cors)', function () {
@@ -658,12 +658,11 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - params
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   describe('httpcall - params', function () {
     const testParams = function (method, url, params, options, expectUrl, expectBody) {
-
       let opts = {}
       if (typeof options === 'string') {
         // opt_opts omitted
@@ -735,9 +734,9 @@ describe('http tests', function () {
     testParams('PUT', '/put', { foo: 'bar' }, '/put', 'foo=bar')
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - before send (client only)
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   onClient(function () {
     describe('httpcall - before send', function () {
       it('is not implemented', function (done) {
@@ -758,9 +757,9 @@ describe('http tests', function () {
     })
   })
 
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   // httpcall - static file serving (server only)
-  //----------------------------------------------------------------------------
+  // ----------------------------------------------------------------------------
   onServer(function () {
     // This is testing the server's static file sending code, not the http
     // package. It's here because it is very similar to the other tests
@@ -779,10 +778,9 @@ describe('http tests', function () {
           ? '' // No prefix for web.browser (modern).
           : '/__browser.legacy'
 
-
-
         it(`should ${shouldServe ? '' : 'not'} serve ${path}`, function (done) {
           const callback = function (error, result) {
+            assert.isFalse(!!error)
             assert.equal(result.statusCode, code, 'code')
             if (match) {
               assert.match(result.content, match, 'content match')
@@ -838,7 +836,6 @@ describe('http tests', function () {
     })
   })
 })
-
 
 // TODO TEST/ADD:
 // - full fetch api? fetch on the client?

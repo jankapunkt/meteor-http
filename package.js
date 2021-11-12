@@ -1,3 +1,4 @@
+/* eslint-env meteor */
 Package.describe({
   name: 'jkuester:http',
   version: '2.0.1',
@@ -28,12 +29,14 @@ Package.onTest(function (api) {
   api.use('webapp', 'server')
   api.use('underscore')
   api.use('random')
+  api.use('lmieulet:meteor-coverage')
+  api.use('lmieulet:meteor-legacy-coverage')
+  api.use('meteortesting:mocha')
   api.use('jkuester:http', ['client', 'server'])
-  api.use('tinytest')
-  api.use('test-helpers', ['client', 'server'])
+  // api.use('test-helpers', ['client', 'server'])
 
   api.addFiles('test_responder.js', 'server')
   api.addFiles('httpcall_tests.js', ['client', 'server'])
 
-  api.addAssets('test_static.serveme', 'client')
+  api.addAssets('test_static.serveme', ['client', 'server'])
 })

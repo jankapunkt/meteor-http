@@ -1,5 +1,5 @@
+import { Meteor } from 'meteor/meteor'
 import { EJSON } from 'meteor/ejson'
-import { path } from 'path'
 import { fetch, Request } from 'meteor/fetch'
 import { URL } from 'meteor/url'
 import { HTTP, makeErrorByStatus, populateData } from './httpcall_common.js'
@@ -10,7 +10,7 @@ const hasOwn = Object.prototype.hasOwnProperty
 
 // if we use a Meteor version that bundles Node <= 16 we cannot use the
 // global defined AbortController and fall back to a custom shim
-let AbortControllerImpl = global.AbortController || require('./AbortController').AbortController
+const AbortControllerImpl = global.AbortController || require('./AbortController').AbortController
 
 /**
  * @deprecated
@@ -20,7 +20,7 @@ export const HTTPInternals = {}
 // _call always runs asynchronously; HTTP.call, defined below,
 // wraps _call and runs synchronously when no callback is provided.
 function _call (method, url, options, callback) {
-  ////////// Process arguments //////////
+  /// /////// Process arguments //////////
 
   if (!callback && typeof options === 'function') {
     // support (method, url, callback) argument list
@@ -29,9 +29,6 @@ function _call (method, url, options, callback) {
   }
 
   options = options || {}
-  const debug = options.debug
-    ? (...args) => console.debug('[HTTP]:', ...args)
-    : () => {}
 
   if (hasOwn.call(options, 'beforeSend')) {
     throw new Error('Option beforeSend not supported on server.')
@@ -56,8 +53,7 @@ function _call (method, url, options, callback) {
 
   if (content || method === 'GET' || method === 'HEAD') {
     paramsForUrl = options.params
-  }
-  else {
+  } else {
     paramsForBody = options.params
   }
 
@@ -69,7 +65,7 @@ function _call (method, url, options, callback) {
     }
 
     const base64 = Buffer.from(options.auth, 'ascii').toString('base64')
-    headers['Authorization'] = `Basic ${base64}`
+    headers.Authorization = `Basic ${base64}`
   }
 
   if (paramsForBody) {
@@ -87,21 +83,10 @@ function _call (method, url, options, callback) {
     })
   }
 
-  let caching
-  if (options.caching) {
-    // TODO
-  }
-
-  let corsMode
-  if (options.mode) {
-
-  }
-
+  const caching = options.cache || 'cache'
+  const corsMode = options.mode || 'cors'
   const timeout = options.timeout || 90000
   const controller = new AbortControllerImpl()
-
-
-  let credentials
 
   // wrap callback to add a 'response' property on an error, in case
   // we have both (http 4xx/5xx error, which has a response payload)
@@ -123,7 +108,7 @@ function _call (method, url, options, callback) {
     ? 'manual'
     : 'follow'
 
-  ////////// Kickoff! //////////
+  /// /////// Kickoff! //////////
 
   // Allow users to override any request option with the npmRequestOptions
   // option.
@@ -134,7 +119,6 @@ function _call (method, url, options, callback) {
     mode: corsMode,
     signal: controller.signal,
     jar: false,
-    timeout: options.timeout,
     body: content,
     redirect: followRedirects,
     referrer: options.referrer,

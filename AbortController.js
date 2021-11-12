@@ -12,7 +12,6 @@ import { EventEmitter } from 'events'
 // (Copyright (c) 2019 Steve Faulkner)
 // -----------------------------------------------------------------------------
 
-
 class AbortController {
   constructor () {
     createSignal(this)
