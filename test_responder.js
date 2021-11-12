@@ -1,10 +1,39 @@
 import { EJSON } from 'meteor/ejson'
-
+import fs from 'fs'
+import path from 'path'
 let TEST_RESPONDER_ROUTE = '/http_test_responder'
 
 const respond = function (req, res) {
+  if (req.url === '/static-content') {
+    const pwd = process.cwd()
+    const dir = '/assets/packages/local-test_jkuester_http/'
+    const fileName = 'test_static.serveme'
+    const resolved = path.join(pwd, dir, fileName)
 
-  if (req.url.slice(0, 5) === '/slow') {
+    return fs.readFile(resolved, function (err, data) {
+      if (err) {
+        res.writeHead(404)
+        res.end(JSON.stringify(err))
+        return;
+      }
+      res.writeHead(200)
+      res.end(data)
+    })
+  }
+
+  else if (req.url === '/static-file') {
+    const pwd = process.cwd()
+    const dir = '/assets/packages/local-test_jkuester_http/'
+    const fileName = 'test_static.serveme'
+    const resolved = path.join(pwd, dir, fileName)
+    const stream = fs.createReadStream(resolved)
+
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'text/plain')
+    return stream.pipe(res)
+  }
+
+  else if (req.url.slice(0, 5) === '/slow') {
     setTimeout(function () {
       res.statusCode = 200
       res.end('A SLOW RESPONSE')
@@ -80,8 +109,10 @@ const respond = function (req, res) {
 }
 
 const run_responder = function () {
-  WebApp.connectHandlers.stack.unshift(
-    { route: TEST_RESPONDER_ROUTE, handle: respond })
+  WebApp.connectHandlers.stack.unshift({
+    route: TEST_RESPONDER_ROUTE,
+    handle: respond
+  })
 }
 
 run_responder()
