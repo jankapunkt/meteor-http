@@ -1,3 +1,5 @@
+/* global XMLHttpRequest ActiveXObject */
+import { Meteor } from 'meteor/meteor'
 import { EJSON } from 'meteor/ejson'
 import { URL } from 'meteor/url'
 import common from './httpcall_common.js'
@@ -24,8 +26,7 @@ const hasOwn = Object.prototype.hasOwnProperty
  * @param {Function} [asyncCallback] Optional callback.  If passed, the method runs asynchronously, instead of synchronously, and calls asyncCallback.  On the client, this callback is required.
  */
 HTTP.call = function (method, url, options, callback) {
-
-  ////////// Process arguments //////////
+  /// /////// Process arguments //////////
 
   if (!callback && typeof options === 'function') {
     // support (method, url, callback) argument list
@@ -35,46 +36,42 @@ HTTP.call = function (method, url, options, callback) {
 
   options = options || {}
 
-  if (typeof callback !== 'function')
+  if (typeof callback !== 'function') {
     throw new Error(
       'Can\'t make a blocking HTTP call from the client; callback required.')
+  }
 
   method = (method || '').toUpperCase()
 
-  var headers = {}
+  const headers = {}
 
-  var content = options.content
+  let content = options.content
   if (options.data) {
     content = EJSON.stringify(options.data)
     headers['Content-Type'] = 'application/json'
   }
 
-  var params_for_url, params_for_body
-  if (content || method === 'GET' || method === 'HEAD')
-    params_for_url = options.params
-  else
-    params_for_body = options.params
+  let paramForUrl, paramForBody
+  if (content || method === 'GET' || method === 'HEAD') { paramForUrl = options.params } else { paramForBody = options.params }
 
-  url = URL._constructUrl(url, options.query, params_for_url)
+  url = URL._constructUrl(url, options.query, paramForUrl)
 
-  if (options.followRedirects === false)
-    throw new Error('Option followRedirects:false not supported on client.')
+  if (options.followRedirects === false) { throw new Error('Option followRedirects:false not supported on client.') }
 
   if (hasOwn.call(options, 'npmRequestOptions')) {
     throw new Error('Option npmRequestOptions not supported on client.')
   }
 
-  var username, password
+  let username, password
   if (options.auth) {
-    var colonLoc = options.auth.indexOf(':')
-    if (colonLoc < 0)
-      throw new Error('Option auth should be of the form "username:password"')
+    const colonLoc = options.auth.indexOf(':')
+    if (colonLoc < 0) { throw new Error('Option auth should be of the form "username:password"') }
     username = options.auth.substring(0, colonLoc)
     password = options.auth.substring(colonLoc + 1)
   }
 
-  if (params_for_body) {
-    content = URL._encodeParams(params_for_body)
+  if (paramForBody) {
+    content = URL._encodeParams(paramForBody)
   }
 
   if (options.headers) {
@@ -83,12 +80,12 @@ HTTP.call = function (method, url, options, callback) {
     })
   }
 
-  ////////// Callback wrapping //////////
+  /// /////// Callback wrapping //////////
 
   // wrap callback to add a 'response' property on an error, in case
   // we have both (http 4xx/5xx error, which has a response payload)
   callback = (function (callback) {
-    var called = false
+    let called = false
     return function (error, response) {
       if (!called) {
         called = true
@@ -100,32 +97,33 @@ HTTP.call = function (method, url, options, callback) {
     }
   })(callback)
 
-  ////////// Kickoff! //////////
+  /// /////// Kickoff! //////////
 
   // from this point on, errors are because of something remote, not
   // something we should check in advance. Turn exceptions into error
   // results.
   try {
     // setup XHR object
-    var xhr
-    if (typeof XMLHttpRequest !== 'undefined')
+    let xhr
+    if (typeof XMLHttpRequest !== 'undefined') {
       xhr = new XMLHttpRequest()
-    else if (typeof ActiveXObject !== 'undefined')
-      xhr = new ActiveXObject('Microsoft.XMLHttp') // IE6
-    else
+    } else if (typeof ActiveXObject !== 'undefined') {
+      // IE6
+      xhr = new ActiveXObject('Microsoft.XMLHttp')
+    } else {
       throw new Error('Can\'t create XMLHttpRequest') // ???
+    }
 
     xhr.open(method, url, true, username, password)
 
-    for (var k in headers)
-      xhr.setRequestHeader(k, headers[k])
+    for (const k in headers) { xhr.setRequestHeader(k, headers[k]) }
 
     // setup timeout
-    var timed_out = false
-    var timer
+    let timedOut = false
+    let timer
     if (options.timeout) {
       timer = Meteor.setTimeout(function () {
-        timed_out = true
+        timedOut = true
         xhr.abort()
       }, options.timeout)
     }
@@ -133,22 +131,20 @@ HTTP.call = function (method, url, options, callback) {
     // callback on complete
     xhr.onreadystatechange = function (evt) {
       if (xhr.readyState === 4) { // COMPLETE
-        if (timer)
-          Meteor.clearTimeout(timer)
+        if (timer) { Meteor.clearTimeout(timer) }
 
-        if (timed_out) {
+        if (timedOut) {
           callback(new Error('Connection timeout'))
         } else if (!xhr.status) {
           // no HTTP response
           callback(new Error('Connection lost'))
         } else {
-
-          var response = {}
+          const response = {}
           response.statusCode = xhr.status
           response.content = xhr.responseText
 
           response.headers = {}
-          var header_str = xhr.getAllResponseHeaders()
+          let headerStr = xhr.getAllResponseHeaders()
 
           // https://github.com/meteor/meteor/issues/553
           //
@@ -163,13 +159,14 @@ HTTP.call = function (method, url, options, callback) {
           // correctly. In theory, we could try and rescue more header
           // values with a list of common headers, but content-type is
           // the only vital one for now.
-          if ('' === header_str && xhr.getResponseHeader('content-type'))
-            header_str =
+          if (headerStr === '' && xhr.getResponseHeader('content-type')) {
+            headerStr =
               'content-type: ' + xhr.getResponseHeader('content-type')
+          }
 
-          var headers_raw = header_str.split(/\r?\n/)
-          headers_raw.forEach(function (h) {
-            var m = /^(.*?):(?:\s+)(.*)$/.exec(h)
+          const headersRaw = headerStr.split(/\r?\n/)
+          headersRaw.forEach(function (h) {
+            const m = /^(.*?):(?:\s+)(.*)$/.exec(h)
             if (m && m.length === 3) {
               response.headers[m[1].toLowerCase()] = m[2]
             }
@@ -177,7 +174,7 @@ HTTP.call = function (method, url, options, callback) {
 
           common.populateData(response)
 
-          var error = null
+          let error = null
           if (response.statusCode >= 400) {
             error = common.makeErrorByStatus(
               response.statusCode,
@@ -193,14 +190,13 @@ HTTP.call = function (method, url, options, callback) {
     // Allow custom control over XHR and abort early.
     if (typeof options.beforeSend === 'function') {
       // Call the callback and check to see if the request was aborted
-      if (false === options.beforeSend.call(null, xhr, options)) {
+      if (options.beforeSend.call(null, xhr, options) === false) {
         return xhr.abort()
       }
     }
 
     // send it on its way
     xhr.send(content)
-
   } catch (err) {
     callback(err)
   }

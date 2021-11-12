@@ -20,4 +20,12 @@ jobs:
         with:
           meteor-release: '1.9.2'
 
-      - run: meteor test-packages ./
+      - name: cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - run: cd tests && meteor npm run ci

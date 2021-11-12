@@ -1,10 +1,36 @@
+/* global _ WebAppInternals WebApp */
 import { EJSON } from 'meteor/ejson'
-
-let TEST_RESPONDER_ROUTE = '/http_test_responder'
+import fs from 'fs'
+import path from 'path'
+const TEST_RESPONDER_ROUTE = '/http_test_responder'
 
 const respond = function (req, res) {
+  if (req.url === '/static-content') {
+    const pwd = process.cwd()
+    const dir = '/assets/packages/local-test_jkuester_http/'
+    const fileName = 'test_static.serveme'
+    const resolved = path.join(pwd, dir, fileName)
 
-  if (req.url.slice(0, 5) === '/slow') {
+    return fs.readFile(resolved, function (err, data) {
+      if (err) {
+        res.writeHead(404)
+        res.end(JSON.stringify(err))
+        return
+      }
+      res.writeHead(200)
+      res.end(data)
+    })
+  } else if (req.url === '/static-file') {
+    const pwd = process.cwd()
+    const dir = '/assets/packages/local-test_jkuester_http/'
+    const fileName = 'test_static.serveme'
+    const resolved = path.join(pwd, dir, fileName)
+    const stream = fs.createReadStream(resolved)
+
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'text/plain')
+    return stream.pipe(res)
+  } else if (req.url.slice(0, 5) === '/slow') {
     setTimeout(function () {
       res.statusCode = 200
       res.end('A SLOW RESPONSE')
@@ -39,8 +65,7 @@ const respond = function (req, res) {
     checker(req, res, function () {
       success = true
     })
-    if (!success)
-      return
+    if (!success) { return }
   } else if (req.url === '/headers') {
     res.statusCode = 201
     res.setHeader('A-Silly-Header', 'Tis a')
@@ -61,27 +86,27 @@ const respond = function (req, res) {
       body = EJSON.parse(body)
     }
 
-    const response_data = {
+    const responseData = {
       method: req.method,
       url: req.url,
       headers: req.headers,
       body: body
     }
 
-    let response_string = ''
-    if (req.method !== 'HEAD')
-      response_string = EJSON.stringify(response_data)
+    let responseString = ''
+    if (req.method !== 'HEAD') { responseString = EJSON.stringify(responseData) }
 
     res.statusCode = 200
     res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.end(response_string)
+    res.end(responseString)
   })
-
 }
 
-const run_responder = function () {
-  WebApp.connectHandlers.stack.unshift(
-    { route: TEST_RESPONDER_ROUTE, handle: respond })
+const runResponder = function () {
+  WebApp.connectHandlers.stack.unshift({
+    route: TEST_RESPONDER_ROUTE,
+    handle: respond
+  })
 }
 
-run_responder()
+runResponder()

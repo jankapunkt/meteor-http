@@ -1,0 +1,64 @@
+{
+  "name": "tests",
+  "private": true,
+  "scripts": {
+    "start": "meteor run",
+    "ci": "npm ci && npm run lint:code && npm run test",
+    "setup": "mkdir -p packages && ln -sfn ../../ ./packages/meteor-http",
+    "lint:code": "npm run setup && standardx -v ../ | snazzy",
+    "lint:code-fix": "npm run setup && standardx --fix ../ | snazzy",
+    "test": "npm run setup && METEOR_PACKAGE_DIRS='../' TEST_BROWSER_DRIVER=puppeteer meteor test-packages --once --driver-package meteortesting:mocha ../ --port=9876",
+    "test:watch": "npm run setup && METEOR_PACKAGE_DIRS='../' TEST_BROWSER_DRIVER=puppeteer TEST_WATCH=1 meteor test-packages --driver-package meteortesting:mocha ../ --port=9876"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.15.4",
+    "meteor-node-stubs": "^1.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/eslint-parser": "^7.16.3",
+    "babel-plugin-istanbul": "^6.1.1",
+    "chai": "^4.3.4",
+    "puppeteer": "^11.0.0",
+    "sinon": "^12.0.1",
+    "snazzy": "^9.0.0",
+    "standardx": "^7.0.0"
+  },
+  "babel": {
+    "env": {
+      "COVERAGE": {
+        "plugins": [
+          "istanbul"
+        ]
+      }
+    }
+  },
+  "standardx": {
+    "globals": [
+      "AutoForm",
+      "arrayTracker",
+      "globalDefaultTemplate",
+      "defaultTypeTemplates",
+      "deps"
+    ],
+    "ignore": [
+      "**/tests/"
+    ]
+  },
+  "eslintConfig": {
+    "parser": "@babel/eslint-parser",
+    "parserOptions": {
+      "sourceType": "module",
+      "allowImportExportEverywhere": true
+    },
+    "rules": {
+      "brace-style": [
+        "error",
+        "stroustrup",
+        {
+          "allowSingleLine": true
+        }
+      ]
+    }
+  }
+}
