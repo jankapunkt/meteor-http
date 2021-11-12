@@ -1,5 +1,12 @@
 # jkuester:http
 
+[![Test suite](https://github.com/jankapunkt/meteor-http/actions/workflows/testsuite.yml/badge.svg)](https://github.com/jankapunkt/meteor-http/actions/workflows/testsuite.yml)
+[![CodeQL](https://github.com/jankapunkt/meteor-http/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/jankapunkt/meteor-http/actions/workflows/codeql-analysis.yml)
+[![built with Meteor](https://img.shields.io/badge/Meteor-package-green?logo=meteor&logoColor=white)](https://atmospherejs.com/leaonline/oauth2-server)
+[![JavaScript Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://standardjs.com)
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+![GitHub](https://img.shields.io/github/license/jankapunkt/meteor-http)
+
 Meteor HTTP + EJSON + More
 
 This is a maintained fork of the **deprecated Meteor `http` package**.
