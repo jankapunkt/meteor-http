@@ -134,7 +134,7 @@ describe('http tests', function () {
         done()
       }
 
-      const options = { timeout: 2500 }
+      const options = { timeout: 500 }
       const invalidIp = '0.0.0.199'
       // This is an invalid destination IP address, and thus should always give an error.
       // If your ISP is intercepting DNS misses and serving ads, an obviously
@@ -156,6 +156,7 @@ describe('http tests', function () {
     })
 
     it('should handle expected 500 error', function (done) {
+      this.timeout(10000)
       // Server serves 500
       const error500Callback = function (error, result) {
         assert.equal(!!error, true, 'expect error')
