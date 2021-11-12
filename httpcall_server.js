@@ -5,7 +5,12 @@ import { URL } from 'meteor/url'
 import { HTTP, makeErrorByStatus, populateData } from './httpcall_common.js'
 
 export { HTTP }
+
 const hasOwn = Object.prototype.hasOwnProperty
+
+// if we use a Meteor version that bundles Node <= 16 we cannot use the
+// global defined AbortController and fall back to a custom shim
+let AbortControllerImpl = global.AbortController || require('./AbortController').AbortController
 
 /**
  * @deprecated
@@ -24,6 +29,9 @@ function _call (method, url, options, callback) {
   }
 
   options = options || {}
+  const debug = options.debug
+    ? (...args) => console.debug('[HTTP]:', ...args)
+    : () => {}
 
   if (hasOwn.call(options, 'beforeSend')) {
     throw new Error('Option beforeSend not supported on server.')
@@ -89,6 +97,10 @@ function _call (method, url, options, callback) {
 
   }
 
+  const timeout = options.timeout || 90000
+  const controller = new AbortControllerImpl()
+
+
   let credentials
 
   // wrap callback to add a 'response' property on an error, in case
@@ -120,7 +132,7 @@ function _call (method, url, options, callback) {
     method: method,
     caching: caching,
     mode: corsMode,
-
+    signal: controller.signal,
     jar: false,
     timeout: options.timeout,
     body: content,
@@ -131,6 +143,7 @@ function _call (method, url, options, callback) {
   }
 
   const request = new Request(newUrl, requestOptions)
+  const timeoutId = setTimeout(() => controller.abort(), timeout)
 
   fetch(request)
     .then(async res => {
@@ -163,6 +176,9 @@ function _call (method, url, options, callback) {
       }
     })
     .catch(err => callback(err))
+    .finally(() => {
+      clearTimeout(timeoutId)
+    })
 }
 
 HTTP.call = Meteor.wrapAsync(_call)
