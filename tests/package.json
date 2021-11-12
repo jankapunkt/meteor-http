@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "start": "meteor run",
-    "ci": "npm ci && npm run lint && npm run test",
+    "ci": "npm ci && npm run lint:code && npm run test",
     "setup": "mkdir -p packages && ln -sfn ../../ ./packages/meteor-http",
     "lint:code": "npm run setup && standardx -v ../ | snazzy",
     "lint:code-fix": "npm run setup && standardx --fix ../ | snazzy",
