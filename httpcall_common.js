@@ -47,6 +47,15 @@ export const populateData = function populateData (response) {
 
 export const HTTP = {}
 
+let debug = () => {} // noop
+
+HTTP.debug = function (fn) {
+  if (typeof fn === 'function') {
+    debug = fn
+  }
+  return debug
+}
+
 /**
  * @summary Send an HTTP `GET` request. Equivalent to calling [`HTTP.call`](#http_call) with "GET" as the first argument.
  * @param {String} url The URL to which the request should be sent.

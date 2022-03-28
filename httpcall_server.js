@@ -20,7 +20,10 @@ export const HTTPInternals = {}
 // _call always runs asynchronously; HTTP.call, defined below,
 // wraps _call and runs synchronously when no callback is provided.
 function _call (method, url, options, callback) {
+  const debug = HTTP.debug() || (() => {})
+
   /// /////// Process arguments //////////
+  debug('call', method, url)
 
   if (!callback && typeof options === 'function') {
     // support (method, url, callback) argument list
@@ -127,7 +130,10 @@ function _call (method, url, options, callback) {
   }
 
   const request = new Request(newUrl, requestOptions)
-  const timeoutId = setTimeout(() => controller.abort(), timeout)
+  const timeoutId = setTimeout(() => {
+    debug(method, url, 'timeout of', timeout, 'ms exceeded - abort request')
+    controller.abort()
+  }, timeout)
 
   fetch(request)
     .then(async res => {

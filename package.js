@@ -1,7 +1,7 @@
 /* eslint-env meteor */
 Package.describe({
   name: 'jkuester:http',
-  version: '2.1.0',
+  version: '2.2.0',
   // Brief, one-line summary of the package.
   summary: 'Make HTTP calls to remote servers using fetch API',
   // URL to the Git repository containing the source code for this package.

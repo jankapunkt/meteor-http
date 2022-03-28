@@ -26,6 +26,8 @@ const hasOwn = Object.prototype.hasOwnProperty
  * @param {Function} [asyncCallback] Optional callback.  If passed, the method runs asynchronously, instead of synchronously, and calls asyncCallback.  On the client, this callback is required.
  */
 HTTP.call = function (method, url, options, callback) {
+  const debug = HTTP.debug() || (() => {})
+  debug(method, url)
   /// /////// Process arguments //////////
 
   if (!callback && typeof options === 'function') {
@@ -122,8 +124,10 @@ HTTP.call = function (method, url, options, callback) {
     let timedOut = false
     let timer
     if (options.timeout) {
+      debug(method, url, 'set timeout', options.timeout)
       timer = Meteor.setTimeout(function () {
         timedOut = true
+        debug(method, url, 'timeout of', options.timeout, 'ms exceeded - abort request')
         xhr.abort()
       }, options.timeout)
     }

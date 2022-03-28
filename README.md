@@ -78,6 +78,8 @@ $ meteor npm run test:coverage # run tests once but with coverage report
 
 ## Changelog
 
+- **2.2.0**
+  - Add `HTTP.debug` to API to allow debugging of unsensitive internals
 - **2.1.0**
   - Added `AbortController` implementation until we get Node >= 16
   - Refactored tests to use `meteortesting:mocha`
