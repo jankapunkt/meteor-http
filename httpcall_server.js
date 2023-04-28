@@ -89,7 +89,7 @@ function _call (method, url, options, callback) {
 
   const caching = options.cache || 'cache'
   const corsMode = options.mode || 'cors'
-  const timeout = options.timeout || 90000
+  const timeout = options.timeout || -1
   const useAbort = timeout > -1
   const controller = useAbort
     ? new AbortControllerImpl()
