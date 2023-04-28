@@ -72,12 +72,15 @@ $ meteor npm run lint:code     # run linter in check mode
 $ meteor npm run lint:code-fix # run linter and autofix issues
 $ meteor npm run test          # run test once
 $ meteor npm run test:watch    # run tests in watch mode
-$ meteor npm run test:coverage # run tests once but with coverage report
 ```
 
 
 ## Changelog
 
+- **2.3.0**
+  - AbortController is not used by default to comply with original API.
+    If a value greater than -1 is given as timeout then AbortController will
+    be called after that timeout.
 - **2.2.0**
   - Add `HTTP.debug` to API to allow debugging of unsensitive internals
 - **2.1.0**

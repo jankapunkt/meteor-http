@@ -20,7 +20,8 @@ export const HTTPInternals = {}
 // _call always runs asynchronously; HTTP.call, defined below,
 // wraps _call and runs synchronously when no callback is provided.
 function _call (method, url, options, callback) {
-  const debug = HTTP.debug() || (() => {})
+  const debug = HTTP.debug() || (() => {
+  })
 
   /// /////// Process arguments //////////
   debug('call', method, url)
@@ -89,7 +90,10 @@ function _call (method, url, options, callback) {
   const caching = options.cache || 'cache'
   const corsMode = options.mode || 'cors'
   const timeout = options.timeout || 90000
-  const controller = new AbortControllerImpl()
+  const useAbort = timeout > -1
+  const controller = useAbort
+    ? new AbortControllerImpl()
+    : undefined
 
   // wrap callback to add a 'response' property on an error, in case
   // we have both (http 4xx/5xx error, which has a response payload)
@@ -120,7 +124,6 @@ function _call (method, url, options, callback) {
     method: method,
     caching: caching,
     mode: corsMode,
-    signal: controller.signal,
     jar: false,
     body: content,
     redirect: followRedirects,
@@ -129,11 +132,23 @@ function _call (method, url, options, callback) {
     headers: headers
   }
 
+  // connect with abort controller only of we have defined
+  // a timeout, otherwise controller will be undefined
+  if (useAbort) {
+    requestOptions.signal = controller.signal
+  }
+
   const request = new Request(newUrl, requestOptions)
-  const timeoutId = setTimeout(() => {
-    debug(method, url, 'timeout of', timeout, 'ms exceeded - abort request')
-    controller.abort()
-  }, timeout)
+  let timeoutId
+
+  // the timeout is only initialized if it
+  // is set greater than -1
+  if (useAbort) {
+    timeoutId = setTimeout(() => {
+      debug(method, url, 'timeout of', timeout, 'ms exceeded - abort request')
+      controller.abort()
+    }, timeout)
+  }
 
   fetch(request)
     .then(async res => {
@@ -166,9 +181,7 @@ function _call (method, url, options, callback) {
       }
     })
     .catch(err => callback(err))
-    .finally(() => {
-      clearTimeout(timeoutId)
-    })
+    .finally(() => clearTimeout(timeoutId))
 }
 
 HTTP.call = Meteor.wrapAsync(_call)
