@@ -181,7 +181,11 @@ function _call (method, url, options, callback) {
       }
     })
     .catch(err => callback(err))
-    .finally(() => clearTimeout(timeoutId))
+    .finally(() => {
+      if (typeof timeoutId !== 'undefined') {
+        clearTimeout(timeoutId)
+      }
+    })
 }
 
 HTTP.call = Meteor.wrapAsync(_call)
