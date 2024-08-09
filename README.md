@@ -36,10 +36,9 @@ import { HTTP } from 'meteor/jkuester:http'
 
 ## Usage
 
-The package preserves all the original API functionality, except 
+The package preserves ~~all~~ most of the original API functionality, except 
 `npmRequestOptions` (since `request` has been deprecated).
-
-The API is documented in the [API.md](./API.md) file.
+Furthermore, since v3.0 the server calls are fully `async` since Meteor 3 dropped fibers.
 
 If you want to send custom types, you need to read about [how `ejson` works in
 Meteor](https://docs.meteor.com/api/ejson.html).
@@ -76,7 +75,10 @@ $ meteor npm run test:watch    # run tests in watch mode
 
 
 ## Changelog
-
+- **3.0.0**
+  - Full Meteor 3.0 compatibility
+  - changed tests to use express
+  - HTTP.call on the server is now native async and uses no callbacks anymore
 - **2.3.0**
   - AbortController is not used by default to comply with original API.
     If a value greater than -1 is given as timeout then AbortController will
