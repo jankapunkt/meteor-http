@@ -1,4 +1,3 @@
-import { Meteor } from 'meteor/meteor'
 import { EJSON } from 'meteor/ejson'
 import { fetch, Request } from 'meteor/fetch'
 import { URL } from 'meteor/url'
@@ -10,29 +9,27 @@ const hasOwn = Object.prototype.hasOwnProperty
 
 // if we use a Meteor version that bundles Node <= 16 we cannot use the
 // global defined AbortController and fall back to a custom shim
-const AbortControllerImpl = global.AbortController || require('./AbortController').AbortController
+const AbortControllerImpl = typeof global.AbortController !== 'undefined'
+  ? global.AbortController
+  : require('./AbortController').AbortController
 
 /**
  * @deprecated
  */
 export const HTTPInternals = {}
 
-// _call always runs asynchronously; HTTP.call, defined below,
-// wraps _call and runs synchronously when no callback is provided.
-function _call (method, url, options, callback) {
-  const debug = HTTP.debug() || (() => {
-  })
-
+/**
+ * Server-side implementation is now always async.
+ * @param method
+ * @param url
+ * @param options
+ */
+HTTP.call = function _call (method, url, options = {}) {
+  const debug = HTTP.debug() || (() => {})
   /// /////// Process arguments //////////
   debug('call', method, url)
 
-  if (!callback && typeof options === 'function') {
-    // support (method, url, callback) argument list
-    callback = options
-    options = null
-  }
-
-  options = options || {}
+  options = options ?? {}
 
   if (hasOwn.call(options, 'beforeSend')) {
     throw new Error('Option beforeSend not supported on server.')
@@ -95,21 +92,6 @@ function _call (method, url, options, callback) {
     ? new AbortControllerImpl()
     : undefined
 
-  // wrap callback to add a 'response' property on an error, in case
-  // we have both (http 4xx/5xx error, which has a response payload)
-  callback = (function (cb) {
-    let called = false
-    return function (error, response) {
-      if (!called) {
-        called = true
-        if (error && response) {
-          error.response = response
-        }
-        cb(error, response)
-      }
-    }
-  })(callback)
-
   // is false if false, otherwise always true
   const followRedirects = options.followRedirects === false
     ? 'manual'
@@ -150,42 +132,40 @@ function _call (method, url, options, callback) {
     }, timeout)
   }
 
-  fetch(request)
-    .then(async res => {
-      const content = await res.text()
-      const response = {}
-      response.statusCode = res.status
-      response.content = '' + content
+  return new Promise((resolve, reject) => {
+    fetch(request)
+      .then(async res => {
+        const content = await res.text()
+        const response = {}
+        response.statusCode = res.status
+        response.content = '' + content
 
-      // fetch headers don't allow simple read using bracket notation
-      // so we iterate their entries and assign them to a new Object
-      response.headers = {}
-      for (const entry of res.headers.entries()) {
-        const [key, val] = entry
-        response.headers[key] = val
-      }
+        // fetch headers don't allow simple read using bracket notation
+        // so we iterate their entries and assign them to a new Object
+        response.headers = {}
+        for (const entry of res.headers.entries()) {
+          const [key, val] = entry
+          response.headers[key] = val
+        }
 
-      response.ok = res.ok
-      response.redirected = res.redirected
+        response.ok = res.ok
+        response.redirected = res.redirected
 
-      populateData(response)
+        populateData(response)
 
-      if (response.statusCode >= 400) {
-        const error = makeErrorByStatus(
-          response.statusCode,
-          response.content
-        )
-        callback(error, response)
-      } else {
-        callback(undefined, response)
-      }
-    })
-    .catch(err => callback(err))
-    .finally(() => {
-      if (typeof timeoutId !== 'undefined') {
-        clearTimeout(timeoutId)
-      }
-    })
+        if (response.statusCode >= 400) {
+          const error = makeErrorByStatus(response.statusCode, response.content)
+          error.response = response
+          resolve(error)
+        } else {
+          resolve(response)
+        }
+      })
+      .catch(err => reject(err))
+      .finally(() => {
+        if (typeof timeoutId !== 'undefined') {
+          clearTimeout(timeoutId)
+        }
+      })
+  })
 }
-
-HTTP.call = Meteor.wrapAsync(_call)

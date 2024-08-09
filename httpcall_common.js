@@ -31,7 +31,10 @@ export const populateData = function populateData (response) {
   // Read Content-Type header, up to a ';' if there is one.
   // A typical header might be "application/json; charset=utf-8"
   // or just "application/json".
-  const contentType = (response.headers['content-type'] || ';').split(';')[0]
+  const ctHeader = response.headers?.get
+    ? response.headers.get('content-type')
+    : response.headers['content-type']
+  const contentType = (ctHeader || ';').split(';')[0]
 
   // Only try to parse data as JSON if server sets correct content type.
   if (supportedContentTypes.includes(contentType)) {

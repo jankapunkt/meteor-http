@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* global WebApp XMLHttpRequest */
+/* global XMLHttpRequest */
 import { Meteor } from 'meteor/meteor'
 import { EJSON } from 'meteor/ejson'
 import { Random } from 'meteor/random'
@@ -56,13 +56,13 @@ describe('http tests', function () {
           }
         }
 
-        onServer(function () {
+        onServer(async function () {
           // test sync version
           try {
-            const result = HTTP.call('GET', urlPrefix() + url, options)
+            const result = await HTTP.call('GET', urlPrefix() + url, options)
             callback(undefined, result)
           } catch (e) {
-            callback(e, e.response)
+            callback(e, undefined)
             done(e)
           }
         })
@@ -140,13 +140,13 @@ describe('http tests', function () {
       // If your ISP is intercepting DNS misses and serving ads, an obviously
       // invalid URL (http://asdf.asdf) might produce an HTTP response.
 
-      onServer(function () {
+      onServer(async function () {
         // test sync version
         try {
-          const unknownServerResult = HTTP.call('GET', `http://${invalidIp}/`, options)
+          const unknownServerResult = await HTTP.call('GET', `http://${invalidIp}/`, options)
           unknownServerCallback(undefined, unknownServerResult)
         } catch (e) {
-          unknownServerCallback(e, e.response)
+          unknownServerCallback(e, undefined)
         }
       })
 
@@ -177,17 +177,18 @@ describe('http tests', function () {
         done()
       }
 
-      if (Meteor.isServer) {
+      onServer(async () => {
         // test sync version
         try {
-          const error500Result = HTTP.call('GET', urlPrefix() + '/fail')
-          error500Callback(undefined, error500Result)
+          const error500Result = await HTTP.call('GET', urlPrefix() + '/fail')
+          error500Callback(error500Result, error500Result.response)
         } catch (e) {
-          error500Callback(e, e.response)
+          error500Callback(e)
         }
-      } else {
+      })
+      onClient(() => {
         HTTP.call('GET', urlPrefix() + '/fail', error500Callback)
-      }
+      })
     })
   })
 
@@ -206,9 +207,9 @@ describe('http tests', function () {
       const timeoutUrl = urlPrefix() + '/slow-' + Random.id()
       const options = { timeout: 500 }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const timeoutResult = HTTP.call('GET', timeoutUrl, options)
+          const timeoutResult = await HTTP.call('GET', timeoutUrl, options)
           timeoutCallback(undefined, timeoutResult)
         } catch (e) {
           timeoutCallback(e, e.response)
@@ -237,9 +238,9 @@ describe('http tests', function () {
       const noTimeoutUrl = urlPrefix() + '/foo-' + Random.id()
       const options = { timeout: 2000 }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const noTimeoutResult = HTTP.call('GET', noTimeoutUrl, options)
+          const noTimeoutResult = await HTTP.call('GET', noTimeoutUrl, options)
           noTimeoutCallback(undefined, noTimeoutResult)
         } catch (e) {
           noTimeoutCallback(e, e.response)
@@ -271,9 +272,9 @@ describe('http tests', function () {
         done()
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const redirect = HTTP.call('GET', urlPrefix() + '/redirect')
+          const redirect = await HTTP.call('GET', urlPrefix() + '/redirect')
           redirectCallback(undefined, redirect)
         } catch (e) {
           done(e)
@@ -311,9 +312,9 @@ describe('http tests', function () {
 
           const options = { followRedirects: followRedirects }
 
-          onServer(function () {
+          onServer(async function () {
             try {
-              const redirect = HTTP.call(method, urlPrefix() + '/redirect', options)
+              const redirect = await HTTP.call(method, urlPrefix() + '/redirect', options)
               callback(undefined, redirect)
             } catch (e) {
               done(e)
@@ -352,9 +353,9 @@ describe('http tests', function () {
           done()
         }
 
-        onServer(function () {
+        onServer(async function () {
           try {
-            const res = HTTP[name](urlPrefix() + '/foo')
+            const res = await HTTP[name](urlPrefix() + '/foo')
             callback(undefined, res)
           } catch (e) {
             done(e)
@@ -383,9 +384,9 @@ describe('http tests', function () {
         done()
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('POST', urlPrefix() + '/foo', { content: 'Hello World!' })
+          const res = await HTTP.call('POST', urlPrefix() + '/foo', { content: 'Hello World!' })
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -411,9 +412,9 @@ describe('http tests', function () {
 
       const options = { data: { greeting: 'Hello World!' } }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('POST', urlPrefix() + '/data-test', options)
+          const res = await HTTP.call('POST', urlPrefix() + '/data-test', options)
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -441,9 +442,9 @@ describe('http tests', function () {
         headers: { 'Content-Type': 'text/stupid' }
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('POST', urlPrefix() + '/data-test-explicit', options)
+          const res = await HTTP.call('POST', urlPrefix() + '/data-test-explicit', options)
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -473,9 +474,9 @@ describe('http tests', function () {
         data: { dist }
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('POST', urlPrefix() + '/ejson', options)
+          const res = await HTTP.call('POST', urlPrefix() + '/ejson', options)
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -507,7 +508,9 @@ describe('http tests', function () {
       const options = { auth: 'meteor:' + password }
       const callback = function (error, result) {
         // should succeed
+        console.debug(result)
         assert.isFalse(!!error)
+        assert.isFalse(!!error?.message)
         assert.isTrue(!!result)
         assert.equal(result.statusCode, 200)
 
@@ -517,9 +520,9 @@ describe('http tests', function () {
         done()
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('GET', urlPrefix() + '/login?' + password, options)
+          const res = await HTTP.call('GET', urlPrefix() + '/login?' + password, options)
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -546,9 +549,9 @@ describe('http tests', function () {
         done()
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          HTTP.call('GET', urlPrefix() + '/login?' + password, options)
+          await HTTP.call('GET', urlPrefix() + '/login?' + password, options)
         } catch (e) {
           callback(e)
         }
@@ -590,9 +593,9 @@ describe('http tests', function () {
         }
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('GET', urlPrefix() + '/foo-with-headers', options)
+          const res = await HTTP.call('GET', urlPrefix() + '/foo-with-headers', options)
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -615,9 +618,9 @@ describe('http tests', function () {
         done()
       }
 
-      onServer(function () {
+      onServer(async function () {
         try {
-          const res = HTTP.call('GET', urlPrefix() + '/headers')
+          const res = await HTTP.call('GET', urlPrefix() + '/headers')
           callback(undefined, res)
         } catch (e) {
           done(e)
@@ -688,9 +691,9 @@ describe('http tests', function () {
           done()
         }
 
-        onServer(function () {
+        onServer(async function () {
           try {
-            const res = HTTP.call(method, urlPrefix() + url, callOptions)
+            const res = await HTTP.call(method, urlPrefix() + url, callOptions)
             callback(undefined, res)
           } catch (e) {
             done(e)
@@ -771,7 +774,7 @@ describe('http tests', function () {
     describe('httpcall - static file serving', function () {
       // Suppress error printing for this test (and for any other code that sets
       // the x-suppress-error header).
-      WebApp.suppressConnectErrors()
+      // WebApp.suppressConnectErrors()
 
       function testStatic (path, code, match, shouldServe) {
         const options = { headers: { 'x-suppress-error': 'true' } }
@@ -789,10 +792,10 @@ describe('http tests', function () {
             done()
           }
 
-          onServer(function () {
+          onServer(async function () {
             try {
               const url = (shouldServe ? urlPrefix() : (urlBase() + prefix)) + path
-              const res = HTTP.get(url, options)
+              const res = await HTTP.get(url, options)
               callback(undefined, res)
             } catch (e) {
               console.error('failed')

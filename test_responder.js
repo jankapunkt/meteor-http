@@ -1,7 +1,8 @@
-/* global _ WebAppInternals WebApp */
+/* global _ WebApp */
 import { EJSON } from 'meteor/ejson'
-import fs from 'fs'
-import path from 'path'
+import fs from 'node:fs'
+import path from 'node:path'
+import { basicAuth } from './test_basic_auth'
 const TEST_RESPONDER_ROUTE = '/http_test_responder'
 
 const respond = function (req, res) {
@@ -13,12 +14,12 @@ const respond = function (req, res) {
 
     return fs.readFile(resolved, function (err, data) {
       if (err) {
-        res.writeHead(404)
-        res.end(JSON.stringify(err))
+        res.status(404)
+        res.json(err)
         return
       }
-      res.writeHead(200)
-      res.end(data)
+      res.status(200)
+      res.send(data)
     })
   } else if (req.url === '/static-file') {
     const pwd = process.cwd()
@@ -27,28 +28,28 @@ const respond = function (req, res) {
     const resolved = path.join(pwd, dir, fileName)
     const stream = fs.createReadStream(resolved)
 
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'text/plain')
+    res.status(200)
+    res.set('Content-Type', 'text/plain')
     return stream.pipe(res)
   } else if (req.url.slice(0, 5) === '/slow') {
     setTimeout(function () {
-      res.statusCode = 200
-      res.end('A SLOW RESPONSE')
+      res.status(200)
+      res.send('A SLOW RESPONSE')
     }, 5000)
     return
   } else if (req.url === '/fail') {
-    res.statusCode = 500
-    res.end('SOME SORT OF SERVER ERROR. foo' +
+    res.status(500)
+    res.send('SOME SORT OF SERVER ERROR. foo' +
       _.times(100, function () {
         return 'MAKE THIS LONG TO TEST THAT WE TRUNCATE'
       }).join(' '))
     return
   } else if (req.url === '/redirect') {
-    res.statusCode = 301
+    res.status(301)
     // XXX shouldn't be redirecting to a relative URL, per HTTP spec,
     // but browsers etc. seem to tolerate it.
-    res.setHeader('Location', TEST_RESPONDER_ROUTE + '/foo')
-    res.end('REDIRECT TO FOO')
+    res.set('Location', TEST_RESPONDER_ROUTE + '/foo')
+    res.send('REDIRECT TO FOO')
     return
   } else if (req.url.slice(0, 6) === '/login') {
     const username = 'meteor'
@@ -59,23 +60,22 @@ const respond = function (req, res) {
     const validate = function (user, pass) {
       return user === username && pass === password
     }
-    const connect = WebAppInternals.NpmModules.connect.module
-    const checker = connect.basicAuth(validate, realm)
+    const checker = basicAuth(validate, realm)
     let success = false
     checker(req, res, function () {
       success = true
     })
     if (!success) { return }
   } else if (req.url === '/headers') {
-    res.statusCode = 201
-    res.setHeader('A-Silly-Header', 'Tis a')
-    res.setHeader('Another-Silly-Header', 'Silly place.')
-    res.end('A RESPONSE WITH SOME HEADERS')
+    res.status(201)
+    res.set('A-Silly-Header', 'Tis a')
+    res.set('Another-Silly-Header', 'Silly place.')
+    res.send('A RESPONSE WITH SOME HEADERS')
     return
   }
 
   const chunks = []
-  req.setEncoding('utf8')
+  req.acceptsEncodings('utf8')
   req.on('data', function (chunk) {
     chunks.push(chunk)
   })
@@ -96,17 +96,14 @@ const respond = function (req, res) {
     let responseString = ''
     if (req.method !== 'HEAD') { responseString = EJSON.stringify(responseData) }
 
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'application/json; charset=utf-8')
-    res.end(responseString)
+    res.status(200)
+    res.set('Content-Type', 'application/json; charset=utf-8')
+    res.send(responseString)
   })
 }
 
 const runResponder = function () {
-  WebApp.connectHandlers.stack.unshift({
-    route: TEST_RESPONDER_ROUTE,
-    handle: respond
-  })
+  WebApp.rawHandlers.use(TEST_RESPONDER_ROUTE, respond)
 }
 
 runResponder()
