@@ -11,8 +11,8 @@
     "test:watch": "npm run setup && METEOR_PACKAGE_DIRS='../' TEST_BROWSER_DRIVER=puppeteer TEST_WATCH=1 meteor test-packages --driver-package meteortesting:mocha ../ --port=9876"
   },
   "dependencies": {
-    "@babel/runtime": "^7.15.4",
-    "meteor-node-stubs": "^1.1.0"
+    "@babel/runtime": "^7.25.0",
+    "meteor-node-stubs": "^1.2.9"
   },
   "devDependencies": {
     "@babel/core": "^7.16.0",
